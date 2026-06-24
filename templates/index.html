@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0d1018" />
+    <title>AI Sales Copilot</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/static/style.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#mainPanel" data-i18n="app.title">Skip to content</a>
+
+    <header class="topbar">
+      <div class="topbar__brand">
+        <div class="brand-mark" aria-hidden="true">
+          <span class="brand-mark__dot"></span>
+          <span class="brand-mark__dot brand-mark__dot--accent"></span>
+        </div>
+        <div class="brand-text">
+          <h1 data-i18n="app.title">AI Sales Copilot</h1>
+          <p class="brand-tagline" data-i18n="app.tagline">
+            Real-time guidance for sales conversations
+          </p>
+        </div>
+      </div>
+
+      <div class="topbar__status" role="status" aria-live="polite">
+        <span class="pill pill--neutral" id="connPill" data-i18n="status.connecting">
+          Connecting…
+        </span>
+        <button
+          type="button"
+          id="asrPill"
+          class="pill pill--neutral pill--button"
+          data-i18n-title="tooltips.asrSettings"
+          aria-label="ASR settings"
+        >
+          ASR: …
+        </button>
+        <button
+          type="button"
+          id="llmPill"
+          class="pill pill--neutral pill--button"
+          data-i18n-title="tooltips.llmSettings"
+          aria-label="LLM settings"
+        >
+          LLM: …
+        </button>
+        <span class="pill pill--neutral" id="micPill">Mic: …</span>
+        <span class="pill pill--role" id="speakerPill" data-role="idle"></span>
+      </div>
+
+      <div class="topbar__actions">
+        <button
+          type="button"
+          id="btnSettings"
+          class="btn btn--ghost btn--icon"
+          data-i18n-title="nav.settings"
+          aria-label="Settings"
+        >
+          ⚙
+        </button>
+        <button
+          type="button"
+          id="btnTheme"
+          class="btn btn--ghost btn--icon"
+          data-i18n-title="nav.theme"
+          aria-label="Theme"
+        >
+          Light
+        </button>
+        <button
+          type="button"
+          id="btnLang"
+          class="btn btn--ghost btn--icon"
+          data-i18n-title="nav.lang"
+          aria-label="Language"
+        >
+          RU
+        </button>
+        <button
+          type="button"
+          id="btnShortcuts"
+          class="btn btn--ghost btn--icon"
+          data-i18n-title="nav.shortcuts"
+          aria-label="Shortcuts"
+        >
+          ⌘?
+        </button>
+      </div>
+    </header>
+
+    <main id="mainPanel" class="layout">
+      <section class="panel panel--recording">
+        <header class="panel__header">
+          <h2 data-i18n="rec.title">Live recording</h2>
+          <div class="panel__actions">
+            <button
+              type="button"
+              id="btnReset"
+              class="btn btn--ghost"
+              data-i18n-title="nav.reset"
+            >
+              <span data-i18n="buttons.reset">Reset</span>
+            </button>
+            <button
+              type="button"
+              id="btnExportMd"
+              class="btn btn--ghost"
+              data-i18n-title="nav.export"
+            >
+              <span data-i18n="buttons.exportMd">Export Markdown</span>
+            </button>
+            <button
+              type="button"
+              id="btnExportJson"
+              class="btn btn--ghost"
+              data-i18n-title="nav.export"
+            >
+              <span data-i18n="buttons.exportJson">Export JSON</span>
+            </button>
+          </div>
+        </header>
+        <p class="hint" data-i18n="rec.hint">
+          Press Start to arm the microphone. Then hold Shift to capture the client, Space for the manager. The full utterance is transcribed when you release the key.
+        </p>
+        <p class="hint hint--muted" data-i18n="rec.micHint">
+          Open in Chrome or Safari. For other LAN devices use HTTPS with SSL_CERTFILE and SSL_KEYFILE.
+        </p>
+
+        <div class="rec-controls">
+          <button
+            type="button"
+            id="btnMicPerm"
+            class="btn btn--secondary"
+            data-i18n="buttons.grantMic"
+          >
+            Grant microphone
+          </button>
+          <button
+            type="button"
+            id="btnRecord"
+            class="btn btn--primary"
+            data-i18n="buttons.start"
+            data-state="idle"
+          >
+            Start recording
+          </button>
+          <button
+            type="button"
+            id="btnStop"
+            class="btn btn--danger"
+            data-i18n="buttons.stop"
+            disabled
+          >
+            Stop
+          </button>
+        </div>
+
+        <div class="rec-meter">
+          <span class="rec-meter__timer" id="recTimer">00:00</span>
+          <span class="rec-meter__dot" aria-hidden="true"></span>
+          <span class="rec-meter__state" id="recState"></span>
+        </div>
+        <p class="error" id="recError" hidden></p>
+      </section>
+
+      <section class="panel panel--metrics">
+        <header class="panel__header">
+          <h2 data-i18n="metrics.title">Live metrics</h2>
+        </header>
+        <div class="metrics-grid">
+          <div class="metric">
+            <span class="metric__label" data-i18n="metrics.duration">Duration</span>
+            <span class="metric__value" id="metricDuration">00:00</span>
+          </div>
+          <div class="metric">
+            <span class="metric__label" data-i18n="metrics.messages">Messages</span>
+            <span class="metric__value" id="metricMessages">0</span>
+          </div>
+          <div class="metric">
+            <span class="metric__label" data-i18n="metrics.client">Client</span>
+            <span class="metric__value metric__value--client" id="metricClient">0</span>
+          </div>
+          <div class="metric">
+            <span class="metric__label" data-i18n="metrics.manager">Manager</span>
+            <span class="metric__value metric__value--manager" id="metricManager">0</span>
+          </div>
+          <div class="metric metric--wide">
+            <span class="metric__label" data-i18n="metrics.sentiment">Sentiment</span>
+            <span class="metric__value metric__value--text" id="metricSentiment">—</span>
+          </div>
+          <div class="metric metric--wide">
+            <span class="metric__label" data-i18n="metrics.stage">Sales stage</span>
+            <span class="metric__value metric__value--text" id="metricStage">—</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel panel--profile">
+        <header class="panel__header">
+          <h2 data-i18n="profile.title">Client profile</h2>
+        </header>
+        <p class="hint" data-i18n="profile.subtitle">
+          Used to personalise AI advice and ranking of the catalog.
+        </p>
+        <form id="profileForm" class="profile-grid">
+          <label>
+            <span data-i18n="profile.budget">Budget range</span>
+            <input
+              name="budget_range"
+              type="text"
+              placeholder="e.g. $500–$900"
+              data-i18n-placeholder="profile.budgetPlaceholder"
+            />
+          </label>
+          <label>
+            <span data-i18n="profile.interest">Product category</span>
+            <select name="product_interest_category">
+              <option value="" data-i18n="profile.optionAny">any</option>
+              <option value="smartphones" data-i18n="profile.optionSmartphones">
+                smartphones
+              </option>
+              <option value="laptops" data-i18n="profile.optionLaptops">laptops</option>
+              <option value="audio" data-i18n="profile.optionAudio">audio</option>
+            </select>
+          </label>
+          <label>
+            <span data-i18n="profile.priority">Priority</span>
+            <select name="priority">
+              <option value="price" data-i18n="profile.optionPrice">price</option>
+              <option value="quality" data-i18n="profile.optionQuality">quality</option>
+              <option value="performance" data-i18n="profile.optionPerformance">
+                performance
+              </option>
+              <option value="brand" data-i18n="profile.optionBrand">brand</option>
+            </select>
+          </label>
+          <label>
+            <span data-i18n="profile.experience">Experience level</span>
+            <select name="experience_level">
+              <option value="beginner" data-i18n="profile.optionBeginner">beginner</option>
+              <option value="average" data-i18n="profile.optionAverage">average</option>
+              <option value="expert" data-i18n="profile.optionExpert">expert</option>
+            </select>
+          </label>
+          <label>
+            <span data-i18n="profile.urgency">Urgency</span>
+            <select name="purchase_urgency">
+              <option value="low" data-i18n="profile.optionLow">low</option>
+              <option value="medium" data-i18n="profile.optionMedium">medium</option>
+              <option value="high" data-i18n="profile.optionHigh">high</option>
+            </select>
+          </label>
+          <div class="profile-grid__actions">
+            <button type="submit" class="btn btn--secondary" data-i18n="buttons.saveProfile">
+              Save profile
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <div class="columns">
+        <section class="panel panel--transcript">
+          <header class="panel__header">
+            <h2 data-i18n="transcript.title">Transcript</h2>
+          </header>
+          <div id="transcriptBox" class="scroll-box" role="log" aria-live="polite"></div>
+          <p
+            id="transcriptEmpty"
+            class="empty-state"
+            data-i18n="transcript.empty"
+          >
+            Transcript appears here once you start recording.
+          </p>
+        </section>
+
+        <section class="panel panel--advice">
+          <header class="panel__header">
+            <h2 data-i18n="advice.title">AI guidance</h2>
+            <span
+              id="adviceThinking"
+              class="thinking"
+              data-i18n="advice.thinking"
+              role="status"
+              hidden
+            >
+              Thinking…
+            </span>
+          </header>
+          <div id="adviceBox" class="advice-grid"></div>
+          <p id="adviceEmpty" class="empty-state" data-i18n="advice.empty">
+            AI advice appears after the first transcribed segment.
+          </p>
+        </section>
+      </div>
+    </main>
+
+    <div
+      id="shortcutsModal"
+      class="modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="shortcutsTitle"
+      hidden
+    >
+      <div class="modal__backdrop" aria-hidden="true"></div>
+      <div class="modal__card">
+        <header class="modal__header">
+          <h2 id="shortcutsTitle" data-i18n="shortcuts.title">Keyboard shortcuts</h2>
+          <button
+            type="button"
+            id="shortcutsClose"
+            class="btn btn--ghost btn--icon"
+            data-i18n="buttons.close"
+            aria-label="Close"
+          >
+            ✕
+          </button>
+        </header>
+        <dl class="shortcuts">
+          <div class="shortcuts__row">
+            <dt><kbd>R</kbd></dt>
+            <dd data-i18n="shortcuts.record">Start / stop recording</dd>
+          </div>
+          <div class="shortcuts__row">
+            <dt><kbd>Shift</kbd></dt>
+            <dd data-i18n="shortcuts.client">Mark current speech as Client</dd>
+          </div>
+          <div class="shortcuts__row">
+            <dt><kbd>Space</kbd></dt>
+            <dd data-i18n="shortcuts.manager">Mark current speech as Manager</dd>
+          </div>
+          <div class="shortcuts__row">
+            <dt><kbd>L</kbd></dt>
+            <dd data-i18n="shortcuts.lang">Toggle language</dd>
+          </div>
+          <div class="shortcuts__row">
+            <dt><kbd>T</kbd></dt>
+            <dd data-i18n="shortcuts.theme">Toggle theme</dd>
+          </div>
+          <div class="shortcuts__row">
+            <dt><kbd>C</kbd></dt>
+            <dd data-i18n="shortcuts.reset">Reset session</dd>
+          </div>
+          <div class="shortcuts__row">
+            <dt><kbd>E</kbd></dt>
+            <dd data-i18n="buttons.exportMd">Export Markdown</dd>
+          </div>
+          <div class="shortcuts__row">
+            <dt><kbd>?</kbd></dt>
+            <dd data-i18n="shortcuts.help">Open this panel</dd>
+          </div>
+        </dl>
+      </div>
+    </div>
+
+    <div
+      id="settingsModal"
+      class="modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="settingsTitle"
+      hidden
+    >
+      <div class="modal__backdrop" aria-hidden="true"></div>
+      <div class="modal__card modal__card--wide">
+        <header class="modal__header">
+          <h2 id="settingsTitle" data-i18n="settings.title">Settings</h2>
+          <button
+            type="button"
+            id="settingsClose"
+            class="btn btn--ghost btn--icon"
+            data-i18n="buttons.close"
+            aria-label="Close"
+          >
+            ✕
+          </button>
+        </header>
+
+        <section class="settings-section">
+          <h3 class="settings-section__title" data-i18n="settings.llmHeading">
+            LLM provider
+          </h3>
+          <p class="hint" data-i18n="settings.llmIntro">
+            Connect any OpenAI-compatible API (OpenAI, AITunnel, LocalAI, Ollama, vLLM …).
+            Settings live only in server memory and reset on restart.
+          </p>
+
+          <form id="llmForm" class="settings-grid">
+            <label class="settings-grid__field">
+              <span data-i18n="settings.preset">Preset</span>
+              <select id="llmPreset" name="preset">
+                <option value="openai" data-i18n="settings.presetOpenAI">OpenAI</option>
+                <option value="aitunnel" data-i18n="settings.presetAITunnel">
+                  AITunnel
+                </option>
+                <option value="ollama" data-i18n="settings.presetOllama">
+                  Ollama (local)
+                </option>
+                <option value="custom" data-i18n="settings.presetCustom">
+                  Custom
+                </option>
+              </select>
+            </label>
+
+            <label class="settings-grid__field">
+              <span data-i18n="settings.baseUrl">Base URL</span>
+              <input
+                type="text"
+                id="llmBaseUrl"
+                name="base_url"
+                autocomplete="off"
+                spellcheck="false"
+                placeholder="https://api.openai.com/v1"
+              />
+            </label>
+
+            <label class="settings-grid__field">
+              <span data-i18n="settings.model">Model</span>
+              <input
+                type="text"
+                id="llmModel"
+                name="model"
+                autocomplete="off"
+                spellcheck="false"
+                placeholder="gpt-4o-mini"
+              />
+            </label>
+
+            <label class="settings-grid__field settings-grid__field--wide">
+              <span data-i18n="settings.apiKey">API key</span>
+              <div class="settings-grid__key">
+                <input
+                  type="password"
+                  id="llmApiKey"
+                  name="api_key"
+                  autocomplete="off"
+                  spellcheck="false"
+                  placeholder="sk-..."
+                />
+                <button
+                  type="button"
+                  id="llmKeyToggle"
+                  class="btn btn--ghost btn--icon"
+                  data-i18n-title="settings.toggleKey"
+                  aria-label="Show key"
+                >
+                  👁
+                </button>
+              </div>
+              <small class="hint hint--muted" id="llmKeyHint" data-i18n="settings.keyHint">
+                Leave empty to keep the previously saved key.
+              </small>
+            </label>
+
+            <label class="settings-grid__field settings-grid__field--wide checkbox">
+              <input type="checkbox" id="llmStub" name="stub_mode" />
+              <span data-i18n="settings.stubMode">
+                Stub mode (skip LLM, return demo advice)
+              </span>
+            </label>
+
+            <div class="settings-grid__actions">
+              <button type="button" id="llmTest" class="btn btn--secondary">
+                <span data-i18n="settings.testButton">Test connection</span>
+              </button>
+              <button type="submit" id="llmSave" class="btn btn--primary">
+                <span data-i18n="settings.save">Save</span>
+              </button>
+            </div>
+          </form>
+
+          <p
+            id="llmStatus"
+            class="settings-status"
+            role="status"
+            aria-live="polite"
+            data-state="idle"
+          ></p>
+        </section>
+
+        <section class="settings-section">
+          <h3 class="settings-section__title" data-i18n="settings.asrHeading">
+            Transcription quality
+          </h3>
+          <p class="hint" data-i18n="settings.asrIntro">
+            Higher quality uses longer audio segments and wider beam search.
+            Restart the recording after changing the profile to apply the new chunk size.
+          </p>
+
+          <div class="settings-grid">
+            <label class="settings-grid__field">
+              <span data-i18n="settings.asrProfile">Profile</span>
+              <select id="asrProfile">
+                <option value="fast" data-i18n="settings.asrFast">
+                  Fast (3s chunks, low latency)
+                </option>
+                <option value="balanced" data-i18n="settings.asrBalanced">
+                  Balanced (4.5s chunks)
+                </option>
+                <option value="accurate" data-i18n="settings.asrAccurate">
+                  Accurate (6s chunks, slower)
+                </option>
+              </select>
+            </label>
+            <label class="settings-grid__field">
+              <span data-i18n="settings.asrModel">Whisper model</span>
+              <input id="asrModel" type="text" readonly />
+            </label>
+          </div>
+          <p
+            id="asrStatus"
+            class="settings-status"
+            role="status"
+            aria-live="polite"
+            data-state="idle"
+          ></p>
+        </section>
+      </div>
+    </div>
+
+    <div id="toast" class="toast" hidden></div>
+
+    <script type="module" src="/static/js/main.js"></script>
+  </body>
+</html>

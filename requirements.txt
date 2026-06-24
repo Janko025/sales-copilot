@@ -1,0 +1,14 @@
+# Web framework + ASGI server (FastAPI backend, native WebSocket transport)
+fastapi>=0.110,<1
+uvicorn[standard]>=0.29,<1
+
+# Persistence: SQLAlchemy ORM + PostgreSQL driver (SQLite works out of the box too)
+SQLAlchemy>=2.0,<3
+psycopg2-binary>=2.9,<3
+
+# LLM (GPT-4o-mini and OpenAI-compatible proxies)
+openai>=1.40.0,<2
+
+# Local ASR. On macOS some av 14+ wheels break at import — cap below 14.
+faster-whisper>=1.0.0,<2
+av>=11,<14; platform_system == "Darwin"
