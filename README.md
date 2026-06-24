@@ -1,4 +1,4 @@
-Ссылка на демо версию: https://sales-copilot-klcl.onrender.com
+Ссылка на демо версию: https://ai-sales-copilot-h2m4.onrender.com
 
 # AI Sales Copilot
 
